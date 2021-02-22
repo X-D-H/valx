@@ -1,8 +1,22 @@
+import { SafeAreaView } from 'react-native-safe-area-context'
+
 import { useNetInfo } from '@react-native-community/netinfo'
 import { StatusBar } from 'expo-status-bar'
 import React, { useEffect, useState } from 'react'
-import { Button, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import {
+  Image,
+  Button,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import { setupData, validateData } from './API'
+
+import Symbol from './components/Symbol'
 
 export default function App() {
   const netInfo = useNetInfo()
@@ -38,87 +52,110 @@ export default function App() {
   if (validateData(cryptoSymbols, fiatSymbols, cryptoData, fiatData)) {
     return (
       <View style={styles.container}>
-        <View>
-          <View style={styles.ticker}>
-            <TextInput
-              style={styles.tickerValue}
-              onChangeText={(value) => {
-                if (value.length < 20) {
-                  setBaseValue(value.replace(',', '.'))
-                }
-              }}
-              value={baseValue}
-              keyboardType="numeric"
-              autoFocus={true}
-              keyboardAppearance="dark"
-            />
-            <Text style={styles.tickerSymbol}>{baseSymbol.toUpperCase()}</Text>
-          </View>
-          <Text style={styles.text}>------------------------------------</Text>
-
-          <View style={styles.tickers}>
-            {fiatSymbols
-              .filter((s) => s != baseSymbol)
-              .map((symbol, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.ticker}
-                  onPress={() => {
-                    setBaseDivider(fiatData.rates[symbol.toUpperCase()])
-                    setBaseSymbol(symbol)
+        <SafeAreaView style={styles.fullWidth}>
+          <ScrollView style={styles.fullWidth}>
+            <View style={styles.tickers}>
+              <View style={styles.ticker}>
+                <TextInput
+                  style={[styles.tickerValue, { borderBottomColor: '#CCFFDA', borderBottomWidth: 1 }]}
+                  onChangeText={(value) => {
+                    if (value.length < 12) {
+                      setBaseValue(value.replace(',', '.'))
+                    }
                   }}
-                >
-                  {cryptoSymbols.includes(baseSymbol) ? (
-                    <Text style={styles.tickerValue}>
-                      {(fiatData.rates[symbol.toUpperCase()] * baseDivider * baseValue).toFixed(2)}
-                    </Text>
-                  ) : (
-                    <Text style={styles.tickerValue}>
-                      {((baseValue * fiatData.rates[symbol.toUpperCase()]) / baseDivider).toFixed(2)}
-                    </Text>
-                  )}
+                  value={baseValue}
+                  keyboardType="numeric"
+                  autoFocus={true}
+                  keyboardAppearance="dark"
+                />
+                <View style={styles.tickerSymbol}>
+                  <Text style={styles.tickerSymbolText}>{baseSymbol.toUpperCase()}</Text>
+                  <View style={styles.tickerSymbolIcon}>
+                    <Symbol name={baseSymbol} />
+                  </View>
+                </View>
+              </View>
+            </View>
 
-                  <Text style={styles.tickerSymbol}>{symbol.toUpperCase()}</Text>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.tickers}>
+              {fiatSymbols
+                .filter((s) => s != baseSymbol)
+                .map((symbol, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={styles.ticker}
+                    onPress={() => {
+                      setBaseDivider(fiatData.rates[symbol.toUpperCase()])
+                      setBaseSymbol(symbol)
+                    }}
+                  >
+                    {cryptoSymbols.includes(baseSymbol) ? (
+                      <Text style={styles.tickerValue}>
+                        {(fiatData.rates[symbol.toUpperCase()] * baseDivider * baseValue).toFixed(2)}
+                      </Text>
+                    ) : (
+                      <Text style={styles.tickerValue}>
+                        {((baseValue * fiatData.rates[symbol.toUpperCase()]) / baseDivider).toFixed(2)}
+                      </Text>
+                    )}
 
-            {cryptoSymbols
-              .filter((s) => s != baseSymbol)
-              .map((symbol, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.ticker}
-                  onPress={() => {
-                    setBaseDivider(cryptoData[symbol.toUpperCase()].quote.USD.price)
-                    setBaseSymbol(symbol)
-                  }}
-                >
-                  {cryptoSymbols.includes(baseSymbol) ? (
-                    <Text style={styles.tickerValue}>
-                      {((cryptoData[symbol.toUpperCase()].quote.USD.price * baseValue) / baseDivider).toFixed(2)}
-                    </Text>
-                  ) : (
-                    <Text style={styles.tickerValue}>
-                      {(((1 / cryptoData[symbol.toUpperCase()].quote.USD.price) * baseValue) / baseDivider).toFixed(2)}
-                    </Text>
-                  )}
-                  <Text style={styles.tickerSymbol}>{symbol.toUpperCase()}</Text>
-                </TouchableOpacity>
-              ))}
-          </View>
+                    <View style={styles.tickerSymbol}>
+                      <Text style={styles.tickerSymbolText}>{symbol.toUpperCase()}</Text>
+                      <View style={styles.tickerSymbolIcon}>
+                        <Symbol name={symbol} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
 
-          <Text style={styles.text}>------------------------------------</Text>
-          {/* <Text style={styles.text}>Data age</Text>
+              {cryptoSymbols
+                .filter((s) => s != baseSymbol)
+                .map((symbol, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={styles.ticker}
+                    onPress={() => {
+                      setBaseDivider(cryptoData[symbol.toUpperCase()].quote.USD.price)
+                      setBaseSymbol(symbol)
+                    }}
+                  >
+                    {cryptoSymbols.includes(baseSymbol) ? (
+                      <Text style={styles.tickerValue}>
+                        {((cryptoData[symbol.toUpperCase()].quote.USD.price * baseValue) / baseDivider).toFixed(2)}
+                      </Text>
+                    ) : (
+                      <Text style={styles.tickerValue}>
+                        {(((1 / cryptoData[symbol.toUpperCase()].quote.USD.price) * baseValue) / baseDivider).toFixed(
+                          2
+                        )}
+                      </Text>
+                    )}
+                    <View style={styles.tickerSymbol}>
+                      <Text style={styles.tickerSymbolText}>{symbol.toUpperCase()}</Text>
+                      <View style={styles.tickerSymbolIcon}>
+                        <Symbol name={symbol} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+            </View>
+
+            <View style={styles.spacer}></View>
+
+            {/* <Text style={styles.text}>Data age</Text>
           <Text style={styles.text}>Crypto: {fiatDataAge}</Text>
           <Text style={styles.text}>Fiat: {cryptoDataAge}</Text> */}
-        </View>
+          </ScrollView>
+        </SafeAreaView>
         <StatusBar style="light" />
       </View>
     )
   } else {
     return (
       <View style={styles.container}>
-        <Text style={styles.text}>Getting rates, hang tight ...</Text>
+        <SafeAreaView style={styles.fullWidth}>
+          <Text style={styles.text}>Getting rates, hang tight ...</Text>
+        </SafeAreaView>
       </View>
     )
   }
@@ -127,32 +164,60 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Dimensions.get('window').height / 6,
-    backgroundColor: '#111',
+    backgroundColor: '#000',
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
-
-  tickers: {
-    display: 'flex',
+  fullWidth: {
+    flex: 1,
+    width: Dimensions.get('window').width,
   },
-
+  spacer: {
+    height: Dimensions.get('window').height / 2,
+  },
+  tickers: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingRight: 8,
+  },
   ticker: {
-    marginTop: 4,
+    marginTop: 16,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-
   tickerSymbol: {
-    color: '#fff',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  tickerSymbolText: {
+    fontSize: 24,
+    fontFamily: 'Menlo',
+    fontWeight: 'normal',
+    color: '#CCFFDA',
+    minWidth: 128,
     textAlign: 'right',
-    minWidth: 64,
+    paddingRight: 16,
+  },
+  tickerSymbolIcon: {
+    width: 32,
+    height: 32,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tickerValue: {
-    color: '#fff',
+    color: '#CCFFDA',
     textAlign: 'right',
     flexGrow: 1,
+    fontSize: 24,
+    paddingRight: 8,
+    fontFamily: 'Menlo',
+    maxWidth: Dimensions.get('window').width / 2,
   },
   text: {
     color: '#555',
