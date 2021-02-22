@@ -3,17 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { StatusBar } from 'expo-status-bar'
 import React, { useEffect, useState } from 'react'
-import {
-  Image,
-  Button,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import { Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { setupData, validateData } from './API'
 
 import Symbol from './components/Symbol'
@@ -24,10 +14,11 @@ export default function App() {
   const [cryptoSymbols, setCryptoSymbols] = useState(['btc', 'eth', 'nano', 'miota'])
   const [fiatSymbols, setFiatSymbols] = useState(['usd', 'eur', 'gbp', 'nok'])
 
+  const [initialLoad, setInitialLoad] = useState(true)
   const [refreshCounter, setRefreshCounter] = useState(0)
   const [baseValue, setBaseValue] = useState('1')
   const [baseDivider, setBaseDivider] = useState(1)
-  const [baseSymbol, setBaseSymbol] = useState('btc')
+  const [baseSymbol, setBaseSymbol] = useState('usd')
 
   const [cryptoData, setCryptoData] = useState(null)
   const [cryptoDataAge, setCryptoDataAge] = useState('...')
@@ -42,6 +33,12 @@ export default function App() {
 
       setFiatData(r.fiatData)
       setFiatDataAge(r.fiatDataAge)
+
+      if (initialLoad && validateData(cryptoSymbols, fiatSymbols, cryptoData, fiatData)) {
+        setBaseSymbol('btc')
+        setBaseDivider(r.cryptoData.BTC.quote.USD.price)
+        setInitialLoad(false)
+      }
     })
 
     setTimeout(() => {
@@ -54,10 +51,16 @@ export default function App() {
       <View style={styles.container}>
         <SafeAreaView style={styles.fullWidth}>
           <ScrollView style={styles.fullWidth}>
-            <View style={styles.tickers}>
+            <View style={[styles.tickers, { borderBottomWidth: 1, borderBottomColor: '#555', paddingBottom: 16 }]}>
+              {netInfo.isConnected === false && (
+                <Text style={styles.text}>
+                  You are not connected to the internet. The app still works offline, but the current prices might be
+                  different.
+                </Text>
+              )}
               <View style={styles.ticker}>
                 <TextInput
-                  style={[styles.tickerValue, { borderBottomColor: '#CCFFDA', borderBottomWidth: 1 }]}
+                  style={styles.tickerValue}
                   onChangeText={(value) => {
                     if (value.length < 12) {
                       setBaseValue(value.replace(',', '.'))
@@ -121,7 +124,7 @@ export default function App() {
                   >
                     {cryptoSymbols.includes(baseSymbol) ? (
                       <Text style={styles.tickerValue}>
-                        {((cryptoData[symbol.toUpperCase()].quote.USD.price * baseValue) / baseDivider).toFixed(2)}
+                        {((1 / cryptoData[symbol.toUpperCase()].quote.USD.price) * baseDivider).toFixed(2)}
                       </Text>
                     ) : (
                       <Text style={styles.tickerValue}>
@@ -154,7 +157,8 @@ export default function App() {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.fullWidth}>
-          <Text style={styles.text}>Getting rates, hang tight ...</Text>
+          {netInfo.isConnected === true && <Text style={styles.text}>Getting rates, hang tight ... 🤖</Text>}
+          {netInfo.isConnected === false && <Text style={styles.text}>📶 Please check your internet connection</Text>}
         </SafeAreaView>
       </View>
     )
@@ -198,7 +202,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'Menlo',
     fontWeight: 'normal',
-    color: '#CCFFDA',
+    color: '#fff',
     minWidth: 128,
     textAlign: 'right',
     paddingRight: 16,
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tickerValue: {
-    color: '#CCFFDA',
+    color: '#fff',
     textAlign: 'right',
     flexGrow: 1,
     fontSize: 24,
@@ -220,6 +224,6 @@ const styles = StyleSheet.create({
     maxWidth: Dimensions.get('window').width / 2,
   },
   text: {
-    color: '#555',
+    color: '#fff',
   },
 })
